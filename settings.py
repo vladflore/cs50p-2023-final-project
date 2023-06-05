@@ -1,6 +1,14 @@
-from dotenv import dotenv_values
+def load_dotenv_values(dotenv_path: str) -> dict:
+    with open(dotenv_path) as f:
+        dotenv_as_dict = {}
+        for dotenv_line in f.read().splitlines():
+            dotenv_line_as_list = dotenv_line.split("=", 1)
+            if len(dotenv_line_as_list) == 2:
+                dotenv_as_dict[dotenv_line_as_list[0].strip()] = dotenv_line_as_list[1].strip()
+        return dotenv_as_dict
 
-settings = dotenv_values(".env")
+
+settings = load_dotenv_values(".env")
 
 TV_DB_API = settings["TV_DB_API"]
 TOKEN = settings["TOKEN"]

@@ -28,3 +28,7 @@ curl -X 'POST' \
   "pin": ""
 }'
 ```
+
+```shell
+python3 -m http.server
+```
