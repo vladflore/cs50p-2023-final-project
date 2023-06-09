@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+
 from models import Series
 from requests_fetch_strategy import RequestsStrategy
 from texttable import Texttable
@@ -55,7 +56,7 @@ async def fetch_series(query: str) -> list[Series]:
     return await search_series(query, fetch_strategy=fetch_strategy)
 
 
-async def fetch_aired_data(series: Series) -> dict[str, str]:
+async def fetch_aired_data(series: list[Series]) -> dict[str, dict[str, str]]:
     fetch_strategy = RequestsStrategy()
     extra: dict[str, dict[str, str]] = dict()
     for s in series:
@@ -93,7 +94,7 @@ def get_colored_status(s: Series) -> str:
     return f"{Fore.BLACK}{background}{s.status}{Style.RESET_ALL}"
 
 
-def render_next_aired(s: Series, extra: dict[int, dict[str, str]]) -> str:
+def render_next_aired(s: Series, extra: dict[str, dict[str, str | None]]) -> str:
     next_aired = extra[s.tvdb_id]["next_aired"]
     if next_aired:
         reversed_date = reverse_date(next_aired)
@@ -106,7 +107,7 @@ def render_next_aired(s: Series, extra: dict[int, dict[str, str]]) -> str:
         return f"No upcoming episodes {'yet' if s.status in ['Continuing', 'Upcoming'] else ''}"
 
 
-def render_last_aired(s: Series, extra: dict[int, dict[str, str]]) -> str:
+def render_last_aired(s: Series, extra: dict[str, dict[str, str]]) -> str:
     last_aired = extra[s.tvdb_id]["last_aired"]
     if last_aired:
         return reverse_date(last_aired)
@@ -114,7 +115,7 @@ def render_last_aired(s: Series, extra: dict[int, dict[str, str]]) -> str:
         return "N/A"
 
 
-def render_ascii_table(series: list[Series], extra: dict[int, dict[str, str]]) -> str:
+def render_ascii_table(series: list[Series], extra: dict[str, dict[str, str]]) -> str:
     table = Texttable(max_width=0)
     table.add_rows(
         [
