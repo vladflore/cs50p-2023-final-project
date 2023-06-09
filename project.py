@@ -2,7 +2,7 @@ import argparse
 import asyncio
 
 from models import Series
-from requests_fetch_strategy import RequestsStrategy
+from requests_fetch_strategy import RequestsStrategy, AIOHttpStrategy
 from texttable import Texttable
 from colorama import Back, Style, Fore
 import settings
@@ -21,8 +21,10 @@ def main():
 
     print(f"Searching for {query}...")
     series = asyncio.run(fetch_series(query))
+
     print(f"Found {len(series)} series. Fetching data...")
     extra = asyncio.run(fetch_aired_data(series))
+
     print(stats(series))
     print(render_ascii_table(series, extra))
 
@@ -57,11 +59,16 @@ async def fetch_series(query: str) -> list[Series]:
 
 
 async def fetch_aired_data(series: list[Series]) -> dict[str, dict[str, str]]:
-    fetch_strategy = RequestsStrategy()
+    fetch_strategy = AIOHttpStrategy()
     extra: dict[str, dict[str, str]] = dict()
+    tasks = []
     for s in series:
-        aired_data = await get_aired_data(s, fetch_strategy=fetch_strategy)
-        extra[s.tvdb_id] = aired_data
+        tasks.append(
+            (s.tvdb_id, asyncio.create_task(get_aired_data(s, fetch_strategy=fetch_strategy)))
+        )
+    for tvdb_id, t in tasks:
+        aired_data = await t
+        extra[tvdb_id] = aired_data
     return extra
 
 
