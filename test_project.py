@@ -1,4 +1,6 @@
 import datetime
+from unittest.mock import patch, ANY
+
 from models import Series
 from project import (
     get_colored_status,
@@ -6,19 +8,43 @@ from project import (
     render_last_aired,
     render_next_aired,
     stats,
+    fetch_series, fetch_aired_data,
 )
 import re
 import pytest
 
+from requests_fetch_strategy import RequestsStrategy, AIOHttpStrategy
 from web import reverse_date
 
 
-def test_fetch_series():
-    pass
+@pytest.mark.asyncio
+async def test_fetch_series():
+    query = "The Simpsons"
+    with patch("project.search_series", return_value=[Series(
+            id="1", name="Series 1", status="Continuing", tvdb_id="1", thumbnail=""
+    )]) as mock:
+        result = await fetch_series(query)
+        assert result
+        assert len(result) == 1
+        mock.assert_called_once_with(query, fetch_strategy=ANY)
+        assert isinstance(mock.call_args[1]['fetch_strategy'], RequestsStrategy)
 
 
-def test_fetch_aired_data():
-    pass
+@pytest.mark.asyncio
+async def test_fetch_aired_data():
+    return_value = {"next_aired": "2021-01-01", "last_aired": "2020-01-01"}
+    with patch("project.get_aired_data", return_value=return_value) as mock:
+        result = await fetch_aired_data([Series(
+            id="1", name="Series 1", status="Continuing", tvdb_id="1", thumbnail=""
+        )])
+        assert result
+        assert len(result) == 1
+        assert result["1"]["next_aired"] == "2021-01-01"
+        assert result["1"]["last_aired"] == "2020-01-01"
+        mock.assert_called_once_with(Series(
+            id="1", name="Series 1", status="Continuing", tvdb_id="1", thumbnail=""
+        ), fetch_strategy=ANY)
+        assert isinstance(mock.call_args[1]['fetch_strategy'], AIOHttpStrategy)
 
 
 def test_stats_no_series():
@@ -31,9 +57,13 @@ def test_stats_no_series():
 def test_stats_with_series():
     result = stats(
         [
-            Series(id="1", name="Series 1", status="Continuing", tvdb_id="1", thumbnail=""),
+            Series(
+                id="1", name="Series 1", status="Continuing", tvdb_id="1", thumbnail=""
+            ),
             Series(id="2", name="Series 2", status="Ended", tvdb_id="2", thumbnail=""),
-            Series(id="3", name="Series 3", status="Upcoming", tvdb_id="3", thumbnail=""),
+            Series(
+                id="3", name="Series 3", status="Upcoming", tvdb_id="3", thumbnail=""
+            ),
         ]
     )
     assert re.match(
@@ -60,9 +90,13 @@ def test_get_colored_status(status, expected):
 def test_render_ascii_table():
     result = render_ascii_table(
         [
-            Series(id="1", name="Series 1", status="Continuing", tvdb_id="1", thumbnail=""),
+            Series(
+                id="1", name="Series 1", status="Continuing", tvdb_id="1", thumbnail=""
+            ),
             Series(id="2", name="Series 2", status="Ended", tvdb_id="2", thumbnail=""),
-            Series(id="3", name="Series 3", status="Upcoming", tvdb_id="3", thumbnail=""),
+            Series(
+                id="3", name="Series 3", status="Upcoming", tvdb_id="3", thumbnail=""
+            ),
         ],
         {
             "1": {"next_aired": "2021-01-01", "last_aired": "2020-01-01"},

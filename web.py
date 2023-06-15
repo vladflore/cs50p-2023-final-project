@@ -111,7 +111,6 @@ async def render_search_series():
             next_episode_cell = createElement("td", text_content=text_content)
         new_row.appendChild(next_episode_cell)
 
-        last_episode_cell = document.createElement("td")
         last_aired = aired_data["last_aired"]
         last_episode_cell = createElement(
             "td", text_content=f"{reverse_date(last_aired) if last_aired else 'N/A'}"
