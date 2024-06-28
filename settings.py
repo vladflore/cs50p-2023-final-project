@@ -10,12 +10,8 @@ def load_dotenv_values(dotenv_path: str) -> dict:
         return dotenv_as_dict
 
 
-# settings = load_dotenv_values(".env")
+settings = load_dotenv_values("settings.dat")
 
-# TV_DB_API = settings["TV_DB_API"]
-# TOKEN = settings["TOKEN"]
-# JWT_EXPIRATION_DATETIME = settings["JWT_EXPIRATION_DATETIME"]
-
-TV_DB_API = "https://api4.thetvdb.com/v4"
-TOKEN = ""
-JWT_EXPIRATION_DATETIME = 1694924373
+TV_DB_API = settings["TV_DB_API"]
+TOKEN = settings["TOKEN"]
+JWT_EXPIRATION_DATETIME = settings["JWT_EXPIRATION_DATETIME"]

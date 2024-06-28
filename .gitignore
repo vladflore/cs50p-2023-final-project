@@ -1,5 +1,5 @@
 .vscode
 localvenv
 __pycache__
-.env
+settings.dat
 .idea
