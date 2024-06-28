@@ -47,6 +47,10 @@ async def render_search_series(e):
     pyodide_strategy = PyodideStrategy()
 
     query = pydom['#search-input'][0].value
+
+    if not query:
+        return
+
     series: list[Series] = await search_series(query, fetch_strategy=pyodide_strategy)
 
     series_table_body = pydom["#series"][0]
@@ -62,10 +66,10 @@ async def render_search_series(e):
         elif s.status == "Upcoming":
             upcoming += 1
     
-    pydom["#total-results-count"][0].content = f"{len(series)}"
-    pydom["#total-continuing-count"][0].content = f"{continuing}"
-    pydom["#total-upcoming-count"][0].content = f"{upcoming}"
-    pydom["#total-ended-count"][0].content = f"{ended}"
+    pydom["#total-results-count"][0].html = f"{len(series)}"
+    pydom["#total-continuing-count"][0].html = f"{continuing}"
+    pydom["#total-upcoming-count"][0].html = f"{upcoming}"
+    pydom["#total-ended-count"][0].html = f"{ended}"
 
     pydom["#total-results-count"][0].parent._js.classList.remove("d-none")
 
