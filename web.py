@@ -41,18 +41,16 @@ def delta_days(date: str) -> int:
 
 
 async def render_search_series(e):
-    pass
     from pyodide_fetch_strategy import PyodideStrategy
 
     pyodide_strategy = PyodideStrategy()
 
     query = pydom['#search-input'][0].value
     series: list[Series] = await search_series(query, fetch_strategy=pyodide_strategy)
-    # from js import document
 
     series_table_body = pydom["#series"][0]
     if len(series_table_body.children) > 0:
-        series_table_body.innerHTML = ""
+        series_table_body.html = ""
 
     continuing, upcoming, ended = 0, 0, 0
     for s in series:
@@ -67,66 +65,69 @@ async def render_search_series(e):
     pydom["#total-continuing-count"][0].content = f"{continuing}"
     pydom["#total-upcoming-count"][0].content = f"{upcoming}"
     pydom["#total-ended-count"][0].content = f"{ended}"
+
     pydom["#total-results-count"][0].parent._js.classList.remove("d-none")
 
-    # pydom["#spinner"][0].classes.remove("d-none")
-    # for s in series:
-    #     new_row = createElement("tr")
+    pydom["#spinner"][0]._js.classList.remove("d-none")
 
-    #     title_cell = createElement("th", f"{s.name}", scope="row")
-    #     new_row.appendChild(title_cell)
+    for s in series:
+        new_row = createElement("tr")
 
-    #     pyodide_strategy.response_type = ResponseType.BYTES
-    #     thumb = await generate_thumbnail(s.thumbnail, fetch_strategy=pyodide_strategy)
-    #     cover_cell = createElement(
-    #         "td",
-    #         inner_html=f'<img src="{thumb}" class="img-fluid" />'
-    #         if thumb
-    #         else "No thumbnail available",
-    #     )
-    #     new_row.appendChild(cover_cell)
+        title_cell = createElement("th", f"{s.name}", scope="row")
+        new_row.append(title_cell)
 
-    #     status_cell = createElement("td", text_content=f"{s.status}")
-    #     new_row.appendChild(status_cell)
+        pyodide_strategy.response_type = ResponseType.BYTES
+        thumb = await generate_thumbnail(s.thumbnail, fetch_strategy=pyodide_strategy)
+        cover_cell = createElement(
+            "td",
+            inner_html=f'<img src="{thumb}" class="img-fluid" />'
+            if thumb
+            else "No thumbnail available",
+        )
+        new_row.append(cover_cell)
 
-    #     pyodide_strategy.response_type = ResponseType.JSON
-    #     aired_data = await get_aired_data(s, fetch_strategy=pyodide_strategy)
+        status_cell = createElement("td", text_content=f"{s.status}")
+        new_row.append(status_cell)
 
-    #     next_aired = aired_data["next_aired"]
-    #     eye_icon = "<i class='bi bi-eye-fill'></i>"
+        pyodide_strategy.response_type = ResponseType.JSON
+        aired_data = await get_aired_data(s, fetch_strategy=pyodide_strategy)
 
-    #     if next_aired:
-    #         reversed_next_aired = reverse_date(next_aired)
-    #         dd = delta_days(reversed_next_aired)
-    #         if dd < 0:
-    #             cell_html = f"{eye_icon} in {abs(dd)} days ({reversed_next_aired})"
-    #         else:
-    #             cell_html = f"{reversed_next_aired}"
-    #         next_episode_cell = createElement(
-    #             "td",
-    #             inner_html=cell_html,
-    #         )
-    #         next_episode_cell.classList.add("text-success")
-    #     else:
-    #         text_content = f"No upcoming episodes {'yet' if s.status in ['Continuing', 'Upcoming'] else ''}"
-    #         next_episode_cell = createElement("td", text_content=text_content)
-    #     new_row.appendChild(next_episode_cell)
+        next_aired = aired_data["next_aired"]
+        eye_icon = "<i class='bi bi-eye-fill'></i>"
 
-    #     last_aired = aired_data["last_aired"]
-    #     last_episode_cell = createElement(
-    #         "td", text_content=f"{reverse_date(last_aired) if last_aired else 'N/A'}"
-    #     )
-    #     new_row.appendChild(last_episode_cell)
+        if next_aired:
+            reversed_next_aired = reverse_date(next_aired)
+            dd = delta_days(reversed_next_aired)
+            if dd < 0:
+                cell_html = f"{eye_icon} in {abs(dd)} days ({reversed_next_aired})"
+            else:
+                cell_html = f"{reversed_next_aired}"
+            next_episode_cell = createElement(
+                "td",
+                inner_html=cell_html,
+            )
+            next_episode_cell._js.classList.add("text-success")
+        else:
+            text_content = f"No upcoming episodes {'yet' if s.status in ['Continuing', 'Upcoming'] else ''}"
+            next_episode_cell = createElement("td", text_content=text_content)
+        new_row.append(next_episode_cell)
 
-    #     if s.status == "Continuing":
-    #         new_row.classList.add("table-success")
-    #     elif s.status == "Ended":
-    #         new_row.classList.add("table-danger")
-    #     elif s.status == "Upcoming":
-    #         new_row.classList.add("table-info")
+        last_aired = aired_data["last_aired"]
+        last_episode_cell = createElement(
+            "td", text_content=f"{reverse_date(last_aired) if last_aired else 'N/A'}"
+        )
+        new_row.append(last_episode_cell)
 
-    #     series_table_body.appendChild(new_row)
-    # document.getElementById("spinner").classList.add("d-none")
+        if s.status == "Continuing":
+            new_row._js.classList.add("table-success")
+        elif s.status == "Ended":
+            new_row._js.classList.add("table-danger")
+        elif s.status == "Upcoming":
+            new_row._js.classList.add("table-info")
+
+        series_table_body.append(new_row)
+        
+    pydom["#spinner"][0]._js.classList.add("d-none")
 
 
 async def get_aired_data(s: Series, fetch_strategy: Strategy) -> dict[str, str]:
@@ -157,5 +158,6 @@ async def generate_thumbnail(
             f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"
         )
     except Exception:
-        js.console.log("Error generating thumbnail")
+        from pyscript import window
+        window.console.log("Error generating thumbnail")
         return None
