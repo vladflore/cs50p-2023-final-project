@@ -8,6 +8,7 @@ from settings import TOKEN, TV_DB_API
 from utils import createElement
 from datetime import datetime
 from pyweb import pydom
+from pyscript import when
 
 
 async def search_series(query: str, fetch_strategy: Strategy) -> list[Series]:
@@ -161,3 +162,8 @@ async def generate_thumbnail(
         from pyscript import window
         window.console.log("Error generating thumbnail")
         return None
+
+@when('keypress', '#search-input')
+async def keyhandle(evt):
+    if evt.key == "Enter":
+        await render_search_series(evt)
